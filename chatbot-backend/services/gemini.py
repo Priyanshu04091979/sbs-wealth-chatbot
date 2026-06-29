@@ -20,6 +20,18 @@ NON_TICKER_WORDS = {
     "TDS", "TCS", "ITR", "CAGR", "XIRR", "AI", "API", "URL", "HTTP"
 }
 
+# Common Hinglish stopwords and colloquial terms used in Hindi/Hinglish but NOT English
+HINGLISH_WORDS = {
+    "kya", "chahiye", "batao", "bataiye", "kaise", "bhi", "toh", "agar",
+    "nivesh", "paise", "karu", "karun", "kr", "kra", "samjhao", "dikhao",
+    "chalo", "chalte", "hain", "hai", "aur", "ki", "ka", "ke", "mein", "ko", "se",
+    "kese", "ese", "karna", "krna", "he", "h", "na", "ab", "isse", "kis", "pe",
+    "ho", "jaata", "jaati", "gaya", "gayi", "gya", "gyi", "tyohar", "din", "raat",
+    "bhai", "behen", "rakhi", "aata", "aati", "kaunsa", "kaunsi", "konse", "kon",
+    "kya", "kyu", "kyoon", "kyun", "kab", "kahan", "kahin", "puchu", "pucha", "ans",
+    "jawab", "de", "rha", "rhi", "rhey", "raha", "rahi", "rahay"
+}
+
 def extract_ticker(query: str) -> str:
     """
     Extracts a stock ticker symbol from a query.
@@ -49,17 +61,29 @@ def generate_chat_response(messages: list) -> str:
     try:
         user_query = messages[-1].content if messages else ""
 
-        # 1. Retrieve Company Knowledge
+        # 1. Determine Language Directive dynamically
+        is_hindi_script = bool(re.search(r'[\u0900-\u097F]', user_query))
+        query_words = set(re.findall(r'\b[a-zA-Z]+\b', user_query.lower()))
+        has_hinglish_words = bool(query_words.intersection(HINGLISH_WORDS))
+
+        if is_hindi_script:
+            lang_directive = "\n\n(Response instruction: Reply in Devanagari Hindi script only. Do NOT use Roman script. Do NOT use English.)"
+        elif has_hinglish_words:
+            lang_directive = "\n\n(Response instruction: Reply in Hinglish (Roman script, e.g., 'Bilkul! Agar aap...') only. Do NOT reply in Devanagari script. Do NOT reply in English.)"
+        else:
+            lang_directive = "\n\n(Response instruction: Reply in pure English only. Do NOT write in Hinglish. Do NOT write in Hindi or Devanagari script. Start your response in English and continue in English.)"
+
+        # 2. Retrieve Company Knowledge
         company_context = search_company_knowledge(user_query)
 
-        # 2. Retrieve Live Financial Data
+        # 3. Retrieve Live Financial Data
         ticker = extract_ticker(user_query)
         financial_context = ""
         if ticker:
             price_data = get_stock_price(ticker)
             financial_context = f"Live data for {ticker}: {price_data}"
 
-        # 3. Construct the System Instructions
+        # 4. Construct the System Instructions
         system_instruction = (
             "You are a smart financial assistant for SBS Financial Services, a trusted finance company based in Ahmedabad, Gujarat.\n\n"
 
@@ -129,16 +153,18 @@ def generate_chat_response(messages: list) -> str:
             f"--- LIVE FINANCIAL DATA ---\n{financial_context if financial_context else 'Not requested'}"
         )
 
-        # 4. Generate response using Groq (Structured API)
+        # 5. Generate response using Groq (Structured API)
         if groq_key:
             try:
                 groq_client = Groq(api_key=groq_key)
                 
-                # Build messages array for Groq
+                # Build messages array for Groq (with dynamic language directive on the latest message)
                 groq_messages = [{"role": "system", "content": system_instruction}]
-                for msg in messages:
+                for msg in messages[:-1]:
                     role = "user" if msg.role == "user" else "assistant"
                     groq_messages.append({"role": role, "content": msg.content})
+                if messages:
+                    groq_messages.append({"role": "user", "content": messages[-1].content + lang_directive})
 
                 completion = groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile", # Groq's most stable high-speed reasoning model
@@ -148,18 +174,23 @@ def generate_chat_response(messages: list) -> str:
             except Exception as e:
                 return f"⚠️ **Groq Error:** {str(e)[:200]}"
                 
-        # 5. Generate response using Gemini (Structured Fallback)
+        # 6. Generate response using Gemini (Structured Fallback)
         else:
             client = genai.Client(api_key=api_key)
             from google.genai import types
             
-            # Build messages array for Gemini
+            # Build messages array for Gemini (with dynamic language directive on the latest message)
             gemini_messages = []
-            for msg in messages:
+            for msg in messages[:-1]:
                 role = "user" if msg.role == "user" else "model"
                 gemini_messages.append(types.Content(
                     role=role,
                     parts=[types.Part.from_text(text=msg.content)]
+                ))
+            if messages:
+                gemini_messages.append(types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=messages[-1].content + lang_directive)]
                 ))
 
             models_to_try = [
