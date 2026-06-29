@@ -123,7 +123,7 @@ function App() {
                     },
                     default: { duration: 0.3 }
                   }}
-                  className="absolute bottom-20 right-0 bg-[#0f172a] text-white p-4 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] border border-slate-700 w-64 flex flex-col items-start gap-1 text-sm font-sans"
+                  className="absolute bottom-[72px] right-0 bg-[#0f172a] text-white p-4 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] border border-slate-700 w-64 flex flex-col items-start gap-1 text-sm font-sans"
                   style={{ transformOrigin: "bottom right" }}
                 >
                   {/* Close button */}
@@ -138,7 +138,7 @@ function App() {
                     <span>Ask FinAI ✨</span>
                   </div>
                   <p className="text-slate-200 text-xs pr-2 leading-normal">
-                    Need financial advice? Ask me about SIP, Mutual Funds, or Loan Eligibility! 📈
+                    Need financial advice? Ask me about SIP, Mutual Funds, or Loans! 📈
                   </p>
                   
                   {/* Tooltip Arrow pointing down */}
