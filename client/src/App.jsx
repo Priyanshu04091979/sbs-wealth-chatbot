@@ -123,7 +123,7 @@ function App() {
                     },
                     default: { duration: 0.3 }
                   }}
-                  className="absolute bottom-[48px] right-0 bg-[#0f172a] text-white p-4 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] border border-slate-700 w-64 flex flex-col items-start gap-1 text-sm font-sans"
+                  className="absolute bottom-[36px] right-0 bg-[#0f172a] text-white p-4 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] border border-slate-700 w-64 flex flex-col items-start gap-1 text-sm font-sans"
                   style={{ transformOrigin: "bottom right" }}
                 >
                   {/* Close button */}
