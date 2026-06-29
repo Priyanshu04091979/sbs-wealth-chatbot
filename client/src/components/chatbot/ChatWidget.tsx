@@ -95,7 +95,9 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
       transition={{ type: "spring", stiffness: 360, damping: 26 }}
       style={{
         transformOrigin: "bottom right",
-        ...(isMobile ? { width: 'calc(100vw - 2rem)', height: 'min(550px, calc(100vh - 8rem))' } : { width: size.width, height: size.height })
+        width: isMobile ? 'calc(100vw - 2rem)' : size.width,
+        height: isMobile ? 'min(550px, calc(100vh - 8rem))' : size.height,
+        maxHeight: 'calc(100vh - 8rem)'
       }}
       className="bg-slate-50 shadow-[0_8px_30px_rgb(0,0,0,0.16)] border border-slate-200/60 flex flex-col overflow-hidden font-sans rounded-3xl relative"
     >
